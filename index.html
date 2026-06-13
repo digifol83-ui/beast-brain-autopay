@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BeastBrain AutoPay — Developer Portal</title>
+<style>
+:root {
+  --bg: #06090f;
+  --surface: #0d1117;
+  --border: #21262d;
+  --text: #c9d1d9;
+  --muted: #8b949e;
+  --accent: #58a6ff;
+  --accent2: #3fb950;
+  --accent3: #d2a8ff;
+  --warn: #d29922;
+  --err: #f85149;
+  --glow: 0 0 18px rgba(88,166,255,0.25);
+  --radius: 8px;
+  --mono: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+a { color: var(--accent); text-decoration:none; }
+a:hover { text-decoration:underline; }
+
+/* ── Navigation ── */
+nav {
+  position: sticky; top:0; z-index:100;
+  background: rgba(13,17,23,0.92);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  display: flex; align-items: center; gap: 24px;
+  height: 56px;
+}
+nav .logo { font-weight:700; font-size:18px; color:#fff; display:flex; align-items:center; gap:8px; }
+nav .logo span { color: var(--accent2); }
+nav .links { display:flex; gap:16px; margin-left:auto; }
+nav .links a { color: var(--muted); font-size:14px; padding:4px 8px; border-radius:4px; transition:.2s; }
+nav .links a:hover, nav .links a.active { color:#fff; background:rgba(88,166,255,0.1); text-decoration:none; }
+
+/* ── Hero ── */
+.hero {
+  text-align:center; padding:80px 24px 60px;
+  background: linear-gradient(180deg, rgba(88,166,255,0.06) 0%, transparent 60%);
+}
+.hero h1 { font-size:clamp(32px,6vw,56px); font-weight:800; letter-spacing:-1px; color:#fff; }
+.hero h1 span { background:linear-gradient(135deg, var(--accent), var(--accent3)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+.hero p { color:var(--muted); font-size:18px; max-width:680px; margin:16px auto 0; }
+.hero .badges { display:flex; gap:12px; justify-content:center; margin-top:28px; flex-wrap:wrap; }
+.hero .badge {
+  background: var(--surface); border:1px solid var(--border);
+  padding:6px 14px; border-radius:20px; font-size:13px; color:var(--muted);
+  display:flex; align-items:center; gap:6px;
+}
+.hero .badge .dot { width:8px; height:8px; border-radius:50%; }
+.hero .badge .dot.live { background: var(--accent2); box-shadow:0 0 6px var(--accent2); }
+
+/* ── Section ── */
+section { max-width:1100px; margin:0 auto; padding:48px 24px; }
+.section-title { font-size:24px; font-weight:700; color:#fff; margin-bottom:8px; }
+.section-sub { color:var(--muted); margin-bottom:32px; font-size:15px; }
+
+/* ── SDK Tabs ── */
+.tab-nav {
+  display:flex; gap:0; flex-wrap:wrap;
+  border-bottom: 2px solid var(--border); margin-bottom:0;
+}
+.tab-nav button {
+  background:none; border:none; color:var(--muted); cursor:pointer;
+  padding:12px 20px; font-size:14px; font-weight:500;
+  border-bottom:2px solid transparent; margin-bottom:-2px;
+  transition:.2s; display:flex; align-items:center; gap:8px; white-space:nowrap;
+}
+.tab-nav button:hover { color:#fff; }
+.tab-nav button.active { color: var(--accent); border-bottom-color: var(--accent); }
+.tab-nav button .icon { font-size:18px; }
+
+.tab-panel { display:none; }
+.tab-panel.active { display:block; }
+
+/* ── Code Block ── */
+.code-block {
+  background: #0d1117; border:1px solid var(--border); border-radius: var(--radius);
+  margin: 20px 0; position:relative; overflow:hidden;
+}
+.code-block .lang-tag {
+  position:absolute; top:0; right:0; background:var(--border); color:var(--muted);
+  padding:2px 10px; font-size:11px; border-radius:0 0 0 6px; font-family:var(--mono);
+}
+.code-block pre {
+  padding:20px; overflow-x:auto; font-family:var(--mono); font-size:13px;
+  line-height:1.7; color: #e6edf3; margin:0;
+}
+.code-block .copy-btn {
+  position:absolute; top:8px; right:60px;
+  background: var(--surface); border:1px solid var(--border); color: var(--muted);
+  cursor:pointer; padding:4px 12px; border-radius:4px; font-size:12px; transition:.2s;
+}
+.code-block .copy-btn:hover { color:#fff; border-color:var(--accent); }
+.code-block .copy-btn.copied { color:var(--accent2); border-color:var(--accent2); }
+
+/* Syntax highlighting */
+.kw { color: #ff7b72; }
+.str { color: #a5d6ff; }
+.cmt { color: #8b949e; font-style:italic; }
+.fn { color: #d2a8ff; }
+.num { color: #79c0ff; }
+.op { color: #ff7b72; }
+.var { color: #ffa657; }
+.typ { color: #7ee787; }
+
+/* ── Card Grid ── */
+.card-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:20px; }
+.card {
+  background: var(--surface); border:1px solid var(--border); border-radius: var(--radius);
+  padding:24px; transition:.2s;
+}
+.card:hover { border-color: var(--accent); box-shadow: var(--glow); }
+.card h3 { color:#fff; font-size:16px; margin-bottom:8px; display:flex; align-items:center; gap:8px; }
+.card p { color:var(--muted); font-size:14px; }
+
+/* ── Architecture Viz ── */
+.arch-diagram {
+  background: var(--surface); border:1px solid var(--border); border-radius:12px;
+  padding:40px 20px; text-align:center; overflow-x:auto;
+}
+.arch-row { display:flex; justify-content:center; gap:16px; flex-wrap:wrap; margin:12px 0; }
+.arch-box {
+  background: #161b22; border:1px solid var(--border); border-radius: var(--radius);
+  padding:16px 20px; text-align:center; min-width:140px; transition:.2s; cursor:default;
+}
+.arch-box:hover { border-color: var(--accent); transform:translateY(-2px); box-shadow: var(--glow); }
+.arch-box .emoji { font-size:28px; display:block; margin-bottom:4px; }
+.arch-box .label { font-size:13px; font-weight:600; color:#fff; }
+.arch-box .sub  { font-size:11px; color:var(--muted); }
+.arch-arrow { display:flex; align-items:center; color:var(--muted); font-size:20px; }
+
+/* ── Interactive Playground ── */
+.playground {
+  background: var(--surface); border:1px solid var(--border); border-radius:12px;
+  padding:24px;
+}
+.playground textarea {
+  width:100%; min-height:120px; background:#0d1117; color:var(--text);
+  border:1px solid var(--border); border-radius:6px; padding:16px;
+  font-family:var(--mono); font-size:13px; resize:vertical;
+}
+.playground .output {
+  background:#0d1117; border:1px solid var(--border); border-radius:6px;
+  padding:16px; min-height:60px; font-family:var(--mono); font-size:13px;
+  color:var(--accent2); margin-top:12px; white-space:pre-wrap;
+}
+.playground .run-btn {
+  margin-top:12px; background:var(--accent2); color:#000; border:none;
+  padding:10px 28px; border-radius:6px; font-weight:600; cursor:pointer;
+  font-size:14px; transition:.2s;
+}
+.playground .run-btn:hover { opacity:0.85; }
+
+/* ── Search ── */
+.search-wrap {
+  position:relative; max-width:500px; margin:0 auto 32px;
+}
+.search-wrap input {
+  width:100%; background:var(--surface); border:1px solid var(--border);
+  color:var(--text); padding:12px 16px 12px 44px; border-radius:24px;
+  font-size:14px; outline:none; transition:.2s;
+}
+.search-wrap input:focus { border-color:var(--accent); }
+.search-wrap .search-icon {
+  position:absolute; left:16px; top:50%; transform:translateY(-50%);
+  color:var(--muted); font-size:16px;
+}
+
+/* ── Footer ── */
+footer {
+  border-top:1px solid var(--border); text-align:center;
+  padding:32px 24px; color:var(--muted); font-size:13px;
+}
+
+/* ── Toast ── */
+.toast {
+  position:fixed; bottom:24px; right:24px; background:var(--accent2); color:#000;
+  padding:12px 20px; border-radius:8px; font-weight:600; font-size:14px;
+  z-index:999; opacity:0; transform:translateY(10px); transition:.3s;
+}
+.toast.show { opacity:1; transform:translateY(0); }
+
+@media (max-width:768px) {
+  nav .links { display:none; }
+  .tab-nav button { padding:10px 14px; font-size:12px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── Navigation ── -->
+<nav>
+  <div class="logo">⚡ BeastBrain <span>AutoPay</span></div>
+  <div class="links">
+    <a href="#sdks" class="active">SDKs</a>
+    <a href="#architecture">Architecture</a>
+    <a href="#playground">Playground</a>
+    <a href="https://github.com/digifol83-ui/beast-brain-autopay" target="_blank">GitHub ↗</a>
+  </div>
+</nav>
+
+<!-- ── Hero ── -->
+<header class="hero">
+  <h1>Build with <span>BeastBrain</span> AutoPay</h1>
+  <p>Universal fiat-to-crypto payment infrastructure. One integration, every gateway. Card → Wallet in seconds, zero OTP.</p>
+  <div class="badges">
+    <div class="badge"><span class="dot live"></span> Production Ready</div>
+    <div class="badge">🔄 Transak</div>
+    <div class="badge">💳 Stripe</div>
+    <div class="badge">🔗 Plisio</div>
+    <div class="badge">⚡ ChangeNOW</div>
+    <div class="badge">☁️ Google Cloud</div>
+    <div class="badge">◎ Solana</div>
+  </div>
+</header>
+
+<!-- ── Search ── -->
+<section id="sdks">
+  <div class="search-wrap">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="sdkSearch" placeholder="Search SDKs, commands, or concepts..." oninput="filterSDKs()">
+  </div>
+
+<!-- ── SDK Tabs ── -->
+<div class="tab-nav" id="tabNav">
+  <button class="active" onclick="switchTab('transak')"><span class="icon">🔄</span> Transak</button>
+  <button onclick="switchTab('stripe')"><span class="icon">💳</span> Stripe</button>
+  <button onclick="switchTab('plisio')"><span class="icon">🔗</span> Plisio</button>
+  <button onclick="switchTab('changenow')"><span class="icon">⚡</span> ChangeNOW</button>
+  <button onclick="switchTab('googlecloud')"><span class="icon">☁️</span> Google Cloud</button>
+  <button onclick="switchTab('solana')"><span class="icon">◎</span> Solana</button>
+</div>
+
+<!-- ═══════════════ TRANSAK ═══════════════ -->
+<div class="tab-panel active" id="tab-transak">
+  <div class="card-grid" style="margin-top:20px;">
+    <div class="card">
+      <h3>📦 Installation</h3>
+      <p>Frontend JavaScript SDK for embedded fiat-to-crypto widget.</p>
+      <div class="code-block">
+        <span class="lang-tag">bash</span>
+        <button class="copy-btn" onclick="copyCode(this, 'npm install @transak/transak-sdk')">Copy</button>
+        <pre><span class="cmt"># npm</span>
+<span class="kw">npm</span> install @transak/transak-sdk
+
+<span class="cmt"># yarn</span>
+<span class="kw">yarn</span> add @transak/transak-sdk</pre>
+      </div>
+    </div>
+    <div class="card">
+      <h3>🔑 Quick Start</h3>
+      <p>Initialize Transak with your API key and configuration.</p>
+      <div class="code-block">
+        <span class="lang-tag">js</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        <pre><span class="kw">import</span> Transak <span class="kw">from</span> <span class="str">'@transak/transak-sdk'</span>;
+
+<span class="kw">const</span> <span class="var">transak</span> = <span class="kw">new</span> <span class="typ">Transak</span>({
+  <span class="var">apiKey</span>: <span class="str">'YOUR_API_KEY'</span>,
+  <span class="var">environment</span>: <span class="str">'PRODUCTION'</span>,
+  <span class="var">cryptoCurrencyCode</span>: <span class="str">'USDC'</span>,
+  <span class="var">network</span>: <span class="str">'solana'</span>,
+  <span class="var">walletAddress</span>: <span class="str">'RECIPIENT_WALLET'</span>,
+});
+
+<span class="var">transak</span>.<span class="fn">init</span>();</pre>
+      </div>
+    </div>
+    <div class="card">
+      <h3>🎯 Event Handlers</h3>
+      <p>Listen to Transak lifecycle events for full control.</p>
+      <div class="code-block">
+        <span class="lang-tag">js</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        <pre><span class="typ">TRANSAK_EVENTS</span> = {
+  <span class="var">TRANSAK_ORDER_SUCCESSFUL</span>: <span class="str">'ORDER_SUCCESSFUL'</span>,
+  <span class="var">TRANSAK_ORDER_FAILED</span>: <span class="str">'ORDER_FAILED'</span>,
+};
+
+<span class="var">transak</span>.<span class="fn">on</span>(<span class="typ">TRANSAK_EVENTS</span>.<span class="var">TRANSAK_ORDER_SUCCESSFUL</span>,
+  (<span class="var">orderData</span>) => {
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="str">'✅ Payment complete'</span>, <span class="var">orderData</span>);
+    <span class="cmt">// Send orderData to your backend webhook</span>
+  }
+);</pre>
+      </div>
+    </div>
+    <div class="card">
+      <h3>🌐 BeastBrain Integration</h3>
+      <p>Full checkout with BeastBrain's auto-pay orchestrator.</p>
+      <div class="code-block">
+        <span class="lang-tag">js</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        <pre><span class="cmt">// BeastBrain checkout — auto-routes to best gateway</span>
+<span class="kw">const</span> <span class="var">checkout</span> = <span class="kw">await</span> <span class="fn">fetch</span>(<span class="str">'/api/checkout'</span>, {
+  <span class="var">method</span>: <span class="str">'POST'</span>,
+  <span class="var">body</span>: <span class="typ">JSON</span>.<span class="fn">stringify</span>({
+    <span class="var">amount_usd</span>: <span class="num">100</span>,
+    <span class="var">wallet</span>: <span class="str">'SOLANA_ADDRESS'</span>,
+    <span class="var">preferred_provider</span>: <span class="str">'transak'</span>
+  })
+});
+
+<span class="kw">const</span> { <span class="var">session_url</span> } = <span class="kw">await</span> <span class="var">checkout</span>.<span class="fn">json</span>();
+<span class="fn">window</span>.<span class="fn">open</span>(<span class="var">session_url</span>, <span class="str">'_blank'</span>);</pre>
+      </div>
+    </div>
+  </div>
+  <p style="margin-top:16px;color:var(--muted);">📖 Full docs: <a href="https://docs.transak.com" target="_blank">docs.transak.com</a></p>
+</div>
+
+<!-- ═══════════════ STRIPE ═══════════════ -->
+<div class="tab-panel" id="tab-stripe">
+  <div class="card-grid" style="margin-top:20px;">
+    <div class="card">
+      <h3>📦 Installation</h3>
+      <p>Full-stack: frontend Elements + backend API.</p>
+      <div class="code-block">
+        <span class="lang-tag">bash</span>
+        <button class="copy-btn" onclick="copyCode(this, 'pip install stripe\nnpm install @stripe/stripe-js @stripe/react-stripe-js')">Copy</button>
+        <pre><span class="cmt"># Python backend</span>
+<span class="kw">pip</span> install stripe
+
+<span class="cmt"># Node.js backend</span>
+<span class="kw">npm</span> install stripe
+
+<span class="cmt"># React frontend</span>
+<span class="kw">npm</span> install @stripe/stripe-js @stripe/react-stripe-js</pre>
+      </div>
+    </div>
+    <div class="card">
+      <h3>🔑 Backend: Create PaymentIntent</h3>
+      <p>Server-side Python example for BeastBrain lockbox flow.</p>
+      <div class="code-block">
+        <span class="lang-tag">python</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        <pre><span class="kw">import</span> stripe
+stripe.api_key = <span class="str">"sk_live_..."</span>
+
+<span class="kw">def</span> <span class="fn">create_lockbox_payment</span>(<span class="var">amount_usd</span>, <span class="var">metadata</span>):
+    <span class="var">intent</span> = stripe.PaymentIntent.<span class="fn">create</span>(
+        <span class="var">amount</span>=<span class="fn">int</span>(<span class="var">amount_usd</span> * <span class="num">100</span>),
+        <span class="var">currency</span>=<span class="str">"usd"</span>,
+        <span class="var">metadata</span>=<span class="var">metadata</span>,
+        <span class="var">automatic_payment_methods</span>={<span class="str">"enabled"</span>: <span class="typ">True</span>},
+    )
+    <span class="kw">return</span> <span class="var">intent</span>.client_secret</pre>
+      </div>
+    </div>
+    <div class="card">
+      <h3>🎯 Frontend: Stripe Elements</h3>
+      <p>React component with secure card entry.</p>
+      <div class="code-block">
+        <span class="lang-tag">jsx</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        <pre><span class="kw">import</span> { Elements, PaymentElement }
+  <span class="kw">from</span> <span class="str">'@stripe/react-stripe-js'</span>;
+<span class="kw">import</span> { loadStripe }
+  <span class="kw">from</span> <span class="str">'@stripe/stripe-js'</span>;
+
+<span class="kw">const</span> <span class="var">stripePromise</span> = <span class="fn">loadStripe</span>(<span class="str">'pk_live_...'</span>);
+
+<span class="kw">function</span> <span class="fn">BeastPayCheckout</span>() {
+  <span class="kw">return</span> (
+    &lt;<span class="typ">Elements</span> <span class="var">stripe</span>={<span class="var">stripePromise</span>}&gt;
+      &lt;<span class="typ">PaymentElement</span> /&gt;
+    &lt;/<span class="typ">Elements</span>&gt;
+  );
+}</pre>
+      </div>
+    </div>
+    <div class="card">
+      <h3>🔄 Webhook Handler</h3>
+      <p>Verify Stripe events and trigger crypto payout.</p>
+      <div class="code-block">
+        <span class="lang-tag">python</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        <pre><span class="kw">from</span> fastapi <span class="kw">import</span> FastAPI, Request
+
+<span class="var">app</span> = FastAPI()
+
+@<span class="var">app</span>.<span class="fn">post</span>(<span class="str">"/webhook/stripe"</span>)
+<span class="kw">async</span> <span class="kw">def</span> <span class="fn">stripe_webhook</span>(<span class="var">request</span>: Request):
+    <span class="var">payload</span> = <span class="kw">await</span> <span class="var">request</span>.<span class="fn">body</span>()
+    <span class="var">event</span> = stripe.Webhook.<span class="fn">construct_event</span>(
+        <span class="var">payload</span>, <span class="var">request</span>.headers[<span class="str">'stripe-signature'</span>],
+        <span class="str">'whsec_...'</span>
+    )
+    <span class="kw">if</span> <span class="var">event</span>.type == <span class="str">'payment_intent.succeeded'</span>:
+        <span class="kw">await</span> <span class="fn">trigger_crypto_payout</span>(<span class="var">event</span>)
+    <span class="kw">return</span> {<span class="str">"status"</span>: <span class="str">"ok"</span>}</pre>
+      </div>
+    </div>
+  </div>
+  <p style="margin-top:16px;color:var(--muted);">📖 Full docs: <a href="https://docs.stripe.com" target="_blank">docs.stripe.com</a></p>
+</div>
+
+<!-- ═══════════════ PLISIO ═══════════════ -->
+<div class="tab-panel" id="tab-plisio">
+  <div class="card-grid" style="margin-top:20px;">
+    <div class="card">
+      <h3>📦 Installation</h3>
+      <p>REST API with PHP SDK available.</p>
+      <div class="code-block">
+        <span class="lang-tag">bash</span>
+        <button class="copy-btn" onclick="copyCode(this, '# PHP SDK\ncomposer require plisio/plisio-api-php\n\n# Laravel\ncomposer require plisio/plisio-sdk-laravel')">Copy</button>
+        <pre><span class="cmt"># PHP SDK</span>
+<span class="kw">composer</span> require plisio/plisio-api-php
+
+<span class="cmt"># Laravel</span>
+<span class="kw">composer</span> require plisio/plisio-sdk-laravel</pre>
+      </div>
+    </div>
+    <div class="card">
+      <h3>🔑 Create Invoice (REST)</h3>
+      <p>Generate a crypto invoice for any supported currency.</p>
+      <div class="code-block">
+        <span class="lang-tag">python</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        <pre><span class="kw">import</span> requests
+
+<span class="kw">def</span> <span class="fn">create_plisio_invoice</span>(<span class="var">amount_usd</span>, <span class="var">order_id</span>):
+    <span class="var">res</span> = requests.<span class="fn">post</span>(<span class="str">'https://plisio.net/api/v1/invoices/new'</span>,
+        <span class="var">params</span>={<span class="str">'api_key'</span>: <span class="str">'YOUR_API_KEY'</span>},
+        <span class="var">json</span>={
+            <span class="str">'order_name'</span>: <span class="str">'BeastBrain AutoPay'</span>,
+            <span class="str">'order_number'</span>: <span class="var">order_id</span>,
+            <span class="str">'source_amount'</span>: <span class="var">amount_usd</span>,
+            <span class="str">'source_currency'</span>: <span class="str">'USD'</span>,
+            <span class="str">'currency'</span>: <span class="str">'USDC'</span>,
+        })
+    <span class="kw">return</span> <span class="var">res</span>.<span class="fn">json</span>()[<span class="str">'data'</span>][<span class="str">'invoice_url'</span>]</pre>
+      </div>
+    </div>
+    <div class="card">
+      <h3>🎯 Verify Payment</h3>
+      <p>Check invoice status and confirm settlement.</p>
+      <div class="code-block">
+        <span class="lang-tag">python</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        <pre><span class="kw">def</span> <span class="fn">check_plisio_status</span>(<span class="var">txn_id</span>):
+    <span class="var">res</span> = requests.<span class="fn">get</span>(
+        <span class="str">f'https://plisio.net/api/v1/operations/</span><span class="var">{txn_id}</span><span class="str">'</span>,
+        <span class="var">params</span>={<span class="str">'api_key'</span>: <span class="str">'YOUR_API_KEY'</span>}
+    )
+    <span class="var">data</span> = <span class="var">res</span>.<span class="fn">json</span>()[<span class="str">'data'</span>]
+    <span class="kw">return</span> {
+        <span class="str">'status'</span>: <span class="var">data</span>[<span class="str">'status'</span>],
+        <span class="str">'txid'</span>: <span class="var">data</span>[<span class="str">'txid'</span>],
+        <span class="str">'amount'</span>: <span class="var">data</span>[<span class="str">'amount'</span>],
+    }</pre>
+      </div>
+    </div>
+    <div class="card">
+      <h3>🔄 BeastBrain Payout</h3>
+      <p>Zero-OTP fiat-to-crypto settlement flow.</p>
+      <div class="code-block">
+        <span class="lang-tag">python</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        <pre><span class="cmt"># BeastBrain auto-payout via Plisio</span>
+<span class="kw">from</span> brain_api.plisio_payout <span class="kw">import</span> <span class="typ">PlisioPayout</span>
+
+<span class="var">payout</span> = <span class="typ">PlisioPayout</span>(<span class="var">api_key</span>=<span class="str">'YOUR_API_KEY'</span>)
+<span class="var">result</span> = <span class="kw">await</span> <span class="var">payout</span>.<span class="fn">cash_to_crypto</span>(
+    <span class="var">amount_usd</span>=<span class="num">100</span>,
+    <span class="var">wallet</span>=<span class="str">'SOLANA_ADDRESS'</span>,
+    <span class="var">token</span>=<span class="str">'USDC'</span>
+)
+<span class="fn">print</span>(<span class="str">f"✅ Settled: </span><span class="var">{result.txid}</span><span class="str">"</span>)</pre>
+      </div>
+    </div>
+  </div>
+  <p style="margin-top:16px;color:var(--muted);">📖 Full docs: <a href="https://plisio.net/api" target="_blank">plisio.net/api</a></p>
+</div>
+
+<!-- ═══════════════ CHANGENOW ═══════════════ -->
+<div class="tab-panel" id="tab-changenow">
+  <div class="card-grid" style="margin-top:20px;">
+    <div class="card">
+      <h3>📦 Setup</h3>
+      <p>REST API — no SDK install needed. Use any HTTP client.</p>
+      <div class="code-block">
+        <span class="lang-tag">bash</span>
+        <button class="copy-btn" onclick="copyCode(this, '# No install needed — pure REST API\n# Use requests (Python) or axios (Node.js)')">Copy</button>
+        <pre><span class="cmt"># No SDK install needed — pure REST API</span>
+<span class="cmt"># Use requests (Python) or axios (Node.js)</span></pre>
+      </div>
+    </div>
+    <div class="card">
+      <h3>🔑 Create Exchange</h3>
+      <p>Initiate a fiat-to-crypto or crypto-to-crypto swap.</p>
+      <div class="code-block">
+        <span class="lang-tag">python</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        <pre><span class="kw">import</span> requests
+
+<span class="kw">def</span> <span class="fn">create_changenow_swap</span>(<span class="var">amount</span>, <span class="var">from_</span>, <span class="var">to</span>, <span class="var">address</span>):
+    <span class="var">res</span> = requests.<span class="fn">post</span>(
+        <span class="str">'https://api.changenow.io/v2/exchange'</span>,
+        <span class="var">headers</span>={<span class="str">'x-api-key'</span>: <span class="str">'YOUR_API_KEY'</span>},
+        <span class="var">json</span>={
+            <span class="str">'from'</span>: <span class="var">from_</span>,       <span class="cmt"># e.g. 'usd'</span>
+            <span class="str">'to'</span>: <span class="var">to</span>,             <span class="cmt"># e.g. 'usdcsol'</span>
+            <span class="str">'amount'</span>: <span class="var">amount</span>,   <span class="cmt"># e.g. 100</span>
+            <span class="str">'address'</span>: <span class="var">address</span>, <span class="cmt"># recipient wallet</span>
+        })
+    <span class="kw">return</span> <span class="var">res</span>.<span class="fn">json</span>()  <span class="cmt"># { id, payinAddress, status }</span></pre>
+      </div>
+    </div>
+    <div class="card">
+      <h3>🎯 Track Swap Status</h3>
+      <p>Monitor exchange progress in real-time.</p>
+      <div class="code-block">
+        <span class="lang-tag">python</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        <pre><span class="kw">def</span> <span class="fn">track_changenow</span>(<span class="var">exchange_id</span>):
+    <span class="var">res</span> = requests.<span class="fn">get</span>(
+        <span class="str">f'https://api.changenow.io/v2/exchange/</span><span class="var">{exchange_id}</span><span class="str">'</span>,
+        <span class="var">headers</span>={<span class="str">'x-api-key'</span>: <span class="str">'YOUR_API_KEY'</span>}
+    )
+    <span class="var">data</span> = <span class="var">res</span>.<span class="fn">json</span>()
+    <span class="kw">return</span> <span class="var">data</span>[<span class="str">'status'</span>]  <span class="cmt"># 'waiting','confirming','exchanging','sending','finished','failed'</span></pre>
+      </div>
+    </div>
+    <div class="card">
+      <h3>🌐 Available Currencies</h3>
+      <p>Fetch supported pairs dynamically.</p>
+      <div class="code-block">
+        <span class="lang-tag">python</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        <pre><span class="kw">def</span> <span class="fn">get_changenow_currencies</span>():
+    <span class="var">res</span> = requests.<span class="fn">get</span>(
+        <span class="str">'https://api.changenow.io/v2/exchange/currencies'</span>,
+        <span class="var">headers</span>={<span class="str">'x-api-key'</span>: <span class="str">'YOUR_API_KEY'</span>}
+    )
+    <span class="kw">return</span> [<span class="var">c</span>[<span class="str">'ticker'</span>] <span class="kw">for</span> <span class="var">c</span> <span class="kw">in</span> <span class="var">res</span>.<span class="fn">json</span>()]</pre>
+      </div>
+    </div>
+  </div>
+  <p style="margin-top:16px;color:var(--muted);">📖 Full docs: <a href="https://docs.changenow.io" target="_blank">docs.changenow.io</a></p>
+</div>
+
+<!-- ═══════════════ GOOGLE CLOUD ═══════════════ -->
+<div class="tab-panel" id="tab-googlecloud">
+  <div class="card-grid" style="margin-top:20px;">
+    <div class="card">
+      <h3>📦 Installation</h3>
+      <p>gcloud CLI + Python/Node.js client libraries.</p>
+      <div class="code-block">
+        <span class="lang-tag">bash</span>
+        <button class="copy-btn" onclick="copyCode(this, 'sudo apt-get update && sudo apt-get install google-cloud-cli\n\npip install google-cloud-secret-manager google-cloud-kms google-cloud-pubsub\n\nnpm install @google-cloud/secret-manager @google-cloud/kms @google-cloud/pubsub')">Copy</button>
+        <pre><span class="cmt"># gcloud CLI</span>
+<span class="kw">sudo</span> apt-get update
+<span class="kw">sudo</span> apt-get install google-cloud-cli
+
+<span class="cmt"># Python client libraries</span>
+<span class="kw">pip</span> install google-cloud-secret-manager \
+            google-cloud-kms \
+            google-cloud-pubsub
+
+<span class="cmt"># Node.js client libraries</span>
+<span class="kw">npm</span> install @google-cloud/secret-manager \
+            @google-cloud/kms \
+            @google-cloud/pubsub</pre>
+      </div>
+    </div>
+    <div class="card">
+      <h3>🔑 Secret Manager</h3>
+      <p>Securely store and retrieve API keys at runtime.</p>
+      <div class="code-block">
+        <span class="lang-tag">python</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        <pre><span class="kw">from</span> google.cloud <span class="kw">import</span> secretmanager
+
+<span class="var">client</span> = secretmanager.<span class="typ">SecretManagerServiceClient</span>()
+
+<span class="kw">def</span> <span class="fn">get_secret</span>(<span class="var">secret_id</span>):
+    <span class="var">name</span> = <span class="str">f'projects/PROJECT/secrets/</span><span class="var">{secret_id}</span><span class="str">/versions/latest'</span>
+    <span class="var">response</span> = <span class="var">client</span>.<span class="fn">access_secret_version</span>(<span class="var">request</span>={<span class="str">'name'</span>: <span class="var">name</span>})
+    <span class="kw">return</span> <span class="var">response</span>.payload.data.<span class="fn">decode</span>(<span class="str">'UTF-8'</span>)
+
+<span class="cmt"># Usage</span>
+<span class="var">stripe_key</span> = <span class="fn">get_secret</span>(<span class="str">'stripe-api-key'</span>)
+<span class="var">transak_key</span> = <span class="fn">get_secret</span>(<span class="str">'transak-api-key'</span>)</pre>
+      </div>
+    </div>
+    <div class="card">
+      <h3>🎯 Cloud Run Deploy</h3>
+      <p>Deploy BeastBrain to serverless containers.</p>
+      <div class="code-block">
+        <span class="lang-tag">bash</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        <pre><span class="cmt"># Build and push</span>
+<span class="kw">gcloud</span> builds submit --tag gcr.io/PROJECT/beastbrain
+
+<span class="cmt"># Deploy to Cloud Run</span>
+<span class="kw">gcloud</span> run deploy beastbrain \
+  --image gcr.io/PROJECT/beastbrain \
+  --platform managed \
+  --region us-central1 \
+  --allow-unauthenticated \
+  --set-secrets=STRIPE_KEY=stripe-api-key:latest \
+  --set-secrets=TRANSAK_KEY=transak-api-key:latest</pre>
+      </div>
+    </div>
+    <div class="card">
+      <h3>🔄 Pub/Sub Event Bus</h3>
+      <p>Async payment events across microservices.</p>
+      <div class="code-block">
+        <span class="lang-tag">python</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        <pre><span class="kw">from</span> google.cloud <span class="kw">import</span> pubsub_v1
+
+<span class="var">publisher</span> = pubsub_v1.<span class="typ">PublisherClient</span>()
+<span class="var">topic</span> = <span class="str">'projects/PROJECT/topics/payments'</span>
+
+<span class="kw">def</span> <span class="fn">publish_payment_event</span>(<span class="var">event</span>):
+    <span class="var">publisher</span>.<span class="fn">publish</span>(<span class="var">topic</span>,
+        <span class="var">data</span>=<span class="var">json</span>.<span class="fn">dumps</span>(<span class="var">event</span>).<span class="fn">encode</span>(),
+        <span class="var">type</span>=<span class="var">event</span>[<span class="str">'type'</span>]
+    )</pre>
+      </div>
+    </div>
+  </div>
+  <p style="margin-top:16px;color:var(--muted);">📖 Full docs: <a href="https://cloud.google.com/docs" target="_blank">cloud.google.com/docs</a></p>
+</div>
+
+<!-- ═══════════════ SOLANA ═══════════════ -->
+<div class="tab-panel" id="tab-solana">
+  <div class="card-grid" style="margin-top:20px;">
+    <div class="card">
+      <h3>📦 Installation</h3>
+      <p>Web3.js for Solana blockchain interaction + SPL tokens.</p>
+      <div class="code-block">
+        <span class="lang-tag">bash</span>
+        <button class="copy-btn" onclick="copyCode(this, 'npm install @solana/web3.js @solana/spl-token')">Copy</button>
+        <pre><span class="cmt"># npm</span>
+<span class="kw">npm</span> install @solana/web3.js @solana/spl-token
+
+<span class="cmt"># yarn</span>
+<span class="kw">yarn</span> add @solana/web3.js @solana/spl-token</pre>
+      </div>
+    </div>
+    <div class="card">
+      <h3>🔑 Send USDC</h3>
+      <p>Transfer USDC (SPL token) to any wallet.</p>
+      <div class="code-block">
+        <span class="lang-tag">js</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        <pre><span class="kw">import</span> { Connection, Keypair, PublicKey }
+  <span class="kw">from</span> <span class="str">'@solana/web3.js'</span>;
+<span class="kw">import</span> { getOrCreateAssociatedTokenAccount,
+         transfer } <span class="kw">from</span> <span class="str">'@solana/spl-token'</span>;
+
+<span class="kw">const</span> <span class="var">USDC_MINT</span> = <span class="kw">new</span> <span class="typ">PublicKey</span>(
+  <span class="str">'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'</span>);
+
+<span class="kw">const</span> <span class="fn">sendUSDC</span> = <span class="kw">async</span> (<span class="var">from, to, amount</span>) => {
+  <span class="kw">const</span> <span class="var">conn</span> = <span class="kw">new</span> <span class="typ">Connection</span>(<span class="str">'https://api.mainnet-beta.solana.com'</span>);
+  <span class="kw">const</span> <span class="var">src</span> = <span class="kw">await</span> <span class="fn">getOrCreateAssociatedTokenAccount</span>(
+    <span class="var">conn</span>, <span class="var">from</span>, <span class="var">USDC_MINT</span>, <span class="var">from</span>.publicKey);
+  <span class="kw">const</span> <span class="var">dest</span> = <span class="kw">await</span> <span class="fn">getOrCreateAssociatedTokenAccount</span>(
+    <span class="var">conn</span>, <span class="var">from</span>, <span class="var">USDC_MINT</span>, <span class="kw">new</span> <span class="typ">PublicKey</span>(<span class="var">to</span>));
+  <span class="kw">return</span> <span class="kw">await</span> <span class="fn">transfer</span>(<span class="var">conn</span>, <span class="var">from</span>,
+    <span class="var">src</span>.address, <span class="var">dest</span>.address, <span class="var">from</span>,
+    <span class="var">amount</span> * <span class="num">1_000_000</span>);  <span class="cmt">// USDC has 6 decimals</span>
+};</pre>
+      </div>
+    </div>
+    <div class="card">
+      <h3>🎯 Verify Transaction</h3>
+      <p>Confirm on-chain settlement for payment records.</p>
+      <div class="code-block">
+        <span class="lang-tag">js</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        <pre><span class="kw">const</span> <span class="fn">verifyTx</span> = <span class="kw">async</span> (<span class="var">signature</span>) => {
+  <span class="kw">const</span> <span class="var">conn</span> = <span class="kw">new</span> <span class="typ">Connection</span>(
+    <span class="str">'https://api.mainnet-beta.solana.com'</span>);
+  <span class="kw">const</span> <span class="var">tx</span> = <span class="kw">await</span> <span class="var">conn</span>.<span class="fn">getTransaction</span>(<span class="var">signature</span>, {
+    <span class="var">commitment</span>: <span class="str">'confirmed'</span>
+  });
+  <span class="kw">if</span> (<span class="var">tx</span> && !<span class="var">tx</span>.meta.err) {
+    <span class="fn">console</span>.<span class="fn">log</span>(<span class="str">`✅ Confirmed: </span><span class="var">{signature}</span><span class="str">`</span>);
+    <span class="kw">return</span> <span class="kw">true</span>;
+  }
+  <span class="kw">return</span> <span class="kw">false</span>;
+};</pre>
+      </div>
+    </div>
+    <div class="card">
+      <h3>🔄 Wallet Balance</h3>
+      <p>Check USDC balance of any wallet.</p>
+      <div class="code-block">
+        <span class="lang-tag">js</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        <pre><span class="kw">const</span> <span class="fn">getUSDCBalance</span> = <span class="kw">async</span> (<span class="var">walletAddr</span>) => {
+  <span class="kw">const</span> <span class="var">conn</span> = <span class="kw">new</span> <span class="typ">Connection</span>(
+    <span class="str">'https://api.mainnet-beta.solana.com'</span>);
+  <span class="kw">const</span> <span class="var">tokens</span> = <span class="kw">await</span> <span class="var">conn</span>.<span class="fn">getParsedTokenAccountsByOwner</span>(
+    <span class="kw">new</span> <span class="typ">PublicKey</span>(<span class="var">walletAddr</span>),
+    { <span class="var">mint</span>: <span class="kw">new</span> <span class="typ">PublicKey</span>(
+      <span class="str">'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'</span>) }
+  );
+  <span class="kw">const</span> <span class="var">balance</span> = <span class="var">tokens</span>.value[<span class="num">0</span>]
+    ?.<span class="var">account</span>.data.parsed.info.tokenAmount.uiAmount;
+  <span class="kw">return</span> <span class="var">balance</span> || <span class="num">0</span>;
+};</pre>
+      </div>
+    </div>
+  </div>
+  <p style="margin-top:16px;color:var(--muted);">📖 Full docs: <a href="https://solana.com/docs" target="_blank">solana.com/docs</a></p>
+</div>
+</section>
+
+<!-- ── Architecture ── -->
+<section id="architecture">
+  <h2 class="section-title">🏗️ System Architecture</h2>
+  <p class="section-sub">BeastBrain AutoPay routes payments through multiple gateways with intelligent fallback.</p>
+  <div class="arch-diagram">
+    <div class="arch-row">
+      <div class="arch-box"><span class="emoji">👤</span><span class="label">End User</span><span class="sub">Browser / App</span></div>
+    </div>
+    <div class="arch-arrow" style="justify-content:center;">▼</div>
+    <div class="arch-row">
+      <div class="arch-box"><span class="emoji">🧠</span><span class="label">BeastBrain API</span><span class="sub">FastAPI / Cloud Run</span></div>
+    </div>
+    <div class="arch-arrow" style="justify-content:center;">▼</div>
+    <div class="arch-row">
+      <div class="arch-box"><span class="emoji">💳</span><span class="label">Stripe Lockbox</span><span class="sub">Card Entry</span></div>
+      <div class="arch-box"><span class="emoji">🔄</span><span class="label">Transak</span><span class="sub">Fiat → Crypto</span></div>
+      <div class="arch-box"><span class="emoji">🔗</span><span class="label">Plisio</span><span class="sub">Crypto Invoice</span></div>
+      <div class="arch-box"><span class="emoji">⚡</span><span class="label">ChangeNOW</span><span class="sub">Instant Swap</span></div>
+    </div>
+    <div class="arch-arrow" style="justify-content:center;">▼</div>
+    <div class="arch-row">
+      <div class="arch-box"><span class="emoji">◎</span><span class="label">Solana Blockchain</span><span class="sub">USDC Settlement</span></div>
+      <div class="arch-box"><span class="emoji">☁️</span><span class="label">Google Cloud</span><span class="sub">Secrets / Pub/Sub</span></div>
+    </div>
+    <div class="arch-arrow" style="justify-content:center;">▼</div>
+    <div class="arch-row">
+      <div class="arch-box"><span class="emoji">🏦</span><span class="label">Recipient Wallet</span><span class="sub">100% Settlement</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Interactive Playground ── -->
+<section id="playground">
+  <h2 class="section-title">🧪 Live API Playground</h2>
+  <p class="section-sub">Test BeastBrain endpoints directly. Responses appear below.</p>
+  <div class="playground">
+    <select id="playgroundEndpoint" style="background:var(--surface);color:var(--text);border:1px solid var(--border);padding:8px 12px;border-radius:6px;font-size:14px;margin-bottom:12px;">
+      <option value="checkout">POST /api/checkout — Create payment session</option>
+      <option value="status">GET /api/payment/status — Check payment status</option>
+      <option value="gateways">GET /api/gateways — List active gateways</option>
+      <option value="webhook">POST /webhook/transak — Simulate webhook</option>
+    </select>
+    <textarea id="playgroundInput" placeholder='{"amount_usd": 100, "wallet": "SOLANA_WALLET_ADDRESS"}'>{
+  "amount_usd": 100,
+  "wallet": "DRpbCBMxVnDK7maPMoGQFix5grYex4gKkVNimxqMiGeB",
+  "preferred_provider": "auto"
+}</textarea>
+    <button class="run-btn" onclick="runPlayground()">▶ Run Request</button>
+    <div class="output" id="playgroundOutput">
+<span style="color:var(--muted);">// Response will appear here...
+// This playground simulates BeastBrain API calls.
+// Replace with your actual API endpoints in production.</span></div>
+  </div>
+</section>
+
+<!-- ── Footer ── -->
+<footer>
+  <p>⚡ BeastBrain AutoPay — Universal Fiat-to-Crypto Payment Infrastructure</p>
+  <p style="margin-top:8px;">© 2026 BeastBrain. <a href="https://github.com/digifol83-ui/beast-brain-autopay" target="_blank">GitHub</a> · <a href="#sdks">SDKs</a> · <a href="#playground">Playground</a></p>
+</footer>
+
+<!-- ── Toast ── -->
+<div class="toast" id="toast">✓ Copied to clipboard</div>
+
+<script>
+// ── Tab Switching ──
+function switchTab(name) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ── Copy to Clipboard ──
+function copyCode(btn, text) {
+  const pre = btn.parentElement.querySelector('pre');
+  const code = text || pre.textContent;
+  navigator.clipboard.writeText(code.trim()).then(() => {
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    showToast('✓ Copied to clipboard');
+    setTimeout(() => {
+      btn.textContent = 'Copy';
+      btn.classList.remove('copied');
+    }, 2000);
+  });
+}
+
+// ── Toast ──
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ── Search Filter ──
+function filterSDKs() {
+  const q = document.getElementById('sdkSearch').value.toLowerCase().trim();
+  if (!q) {
+    document.querySelectorAll('.card').forEach(c => c.style.opacity = '1');
+    return;
+  }
+  document.querySelectorAll('.card').forEach(card => {
+    const text = card.textContent.toLowerCase();
+    card.style.opacity = text.includes(q) ? '1' : '0.25';
+  });
+}
+
+// ── Playground ──
+async function runPlayground() {
+  const output = document.getElementById('playgroundOutput');
+  const endpoint = document.getElementById('playgroundEndpoint').value;
+  const input = document.getElementById('playgroundInput').value;
+
+  output.innerHTML = '<span style="color:var(--warn);">⏳ Processing...</span>';
+
+  // Simulated responses (replace with actual API calls)
+  const simulations = {
+    checkout: {
+      session_id: 'bb_' + Math.random().toString(36).slice(2, 10),
+      session_url: 'https://checkout.beastbrain.sichermayor.online/session/abc123',
+      provider: 'transak',
+      amount_usd: 100,
+      expires_at: new Date(Date.now() + 1800000).toISOString(),
+      status: 'pending_payment'
+    },
+    status: {
+      session_id: 'bb_abc123',
+      status: 'completed',
+      provider: 'transak',
+      txid: '5fGz' + Math.random().toString(36).slice(2, 8).toUpperCase(),
+      settled_at: new Date().toISOString(),
+      amount_settled: '98.50 USDC'
+    },
+    gateways: {
+      active: ['transak', 'stripe', 'plisio', 'changenow'],
+      health: { transak: 'healthy', stripe: 'healthy', plisio: 'healthy', changenow: 'healthy' },
+      preferred: 'transak',
+      fallback_order: ['transak', 'stripe', 'plisio']
+    },
+    webhook: {
+      received: true,
+      event_type: 'ORDER_SUCCESSFUL',
+      order_id: 'ord_' + Math.random().toString(36).slice(2, 10),
+      processed: true,
+      payout_triggered: true
+    }
+  };
+
+  await new Promise(r => setTimeout(r, 800));
+
+  output.innerHTML = '<span style="color:var(--accent2);">✓ 200 OK</span>\n\n' +
+    JSON.stringify(simulations[endpoint], null, 2);
+}
+
+// ── Smooth scroll for nav links ──
+document.querySelectorAll('nav .links a').forEach(link => {
+  link.addEventListener('click', function(e) {
+    document.querySelectorAll('nav .links a').forEach(l => l.classList.remove('active'));
+    this.classList.add('active');
+  });
+});
+</script>
+</body>
+</html>
