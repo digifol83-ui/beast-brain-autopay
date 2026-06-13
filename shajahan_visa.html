@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Visa Payment — Shajahan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #fafafa;
+  --surface: #ffffff;
+  --border: #e5e7eb;
+  --text: #111827;
+  --muted: #6b7280;
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+  --green: #059669;
+  --red: #dc2626;
+  --radius: 8px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+/* ── Navigation ── */
+nav {
+  position: sticky; top:0; z-index:100;
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  display: flex; align-items: center; gap: 24px;
+  height: 56px;
+}
+nav .logo { font-weight:700; font-size:16px; color:var(--text); display:flex; align-items:center; gap:6px; letter-spacing:-0.3px; }
+nav .logo span { color: var(--accent); }
+nav .back { color: var(--muted); font-size:14px; cursor:pointer; }
+
+/* ── Container ── */
+.container { max-width:680px; margin:0 auto; padding:0 24px; }
+
+/* ── Page Layout ── */
+.page { padding:40px 0 80px; }
+
+/* Status Badge */
+.status-badge {
+  display:inline-flex; align-items:center; gap:6px;
+  background: #fef3c7; color: #92400e;
+  padding:4px 12px; border-radius:16px;
+  font-size:12px; font-weight:500; margin-bottom:16px;
+}
+.status-badge .dot { width:6px; height:6px; border-radius:50%; background: #f59e0b; }
+
+/* Card */
+.card {
+  background: var(--surface); border:1px solid var(--border);
+  border-radius: 12px; padding:28px; box-shadow: var(--shadow);
+  margin-bottom:20px;
+}
+.card h2 { font-size:18px; font-weight:600; margin-bottom:4px; letter-spacing:-0.3px; }
+.card .subtitle { color:var(--muted); font-size:13px; margin-bottom:20px; }
+
+/* Info Grid */
+.info-grid { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.info-item { }
+.info-item .label { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:2px; }
+.info-item .value { font-size:14px; font-weight:500; color:var(--text); }
+
+/* Divider */
+.divider { border:none; border-top:1px solid var(--border); margin:20px 0; }
+
+/* Document Preview */
+.doc-preview {
+  background: #f9fafb; border:1px solid var(--border); border-radius:8px;
+  padding:16px; display:flex; align-items:center; gap:14px;
+}
+.doc-preview .doc-icon {
+  width:44px; height:56px; background: var(--surface); border:1px solid var(--border);
+  border-radius:4px; display:flex; align-items:center; justify-content:center;
+  font-size:20px; flex-shrink:0;
+}
+.doc-preview .doc-name { font-size:13px; font-weight:500; }
+.doc-preview .doc-meta { font-size:11px; color:var(--muted); }
+.doc-preview .doc-status { font-size:11px; color:var(--amber); margin-top:2px; }
+
+/* Price Box */
+.price-box {
+  text-align:center; padding:24px; background: #f9fafb;
+  border-radius:8px; margin-top:16px;
+}
+.price-box .amount { font-size:36px; font-weight:700; color:var(--text); letter-spacing:-1px; }
+.price-box .currency { font-size:14px; color:var(--muted); margin-top:4px; }
+
+/* Button */
+.btn {
+  display:block; width:100%; padding:14px 24px;
+  background: var(--accent); color:#fff; border:none;
+  border-radius:8px; font-size:15px; font-weight:600; cursor:pointer;
+  transition:.15s; font-family:'Inter',sans-serif; text-align:center;
+  margin-top:16px; letter-spacing:-0.2px;
+}
+.btn:hover { background: var(--accent-hover); }
+.btn:disabled { background: #d1d5db; cursor:not-allowed; }
+.btn-secondary {
+  background: var(--surface); color: var(--text); border:1px solid var(--border);
+}
+.btn-secondary:hover { background: #f3f4f6; }
+
+/* Stripe Elements */
+#stripe-container {
+  margin-top:12px; display:none;
+}
+#stripe-container.active { display:block; }
+#card-element {
+  padding:14px; border:1px solid var(--border); border-radius:8px;
+  background: var(--surface); transition:.15s;
+}
+#card-element.StripeElement--focus { border-color: var(--accent); box-shadow:0 0 0 3px rgba(37,99,235,0.1); }
+#card-errors { color:var(--red); font-size:12px; margin-top:8px; min-height:20px; }
+
+/* Success */
+.success-box {
+  text-align:center; padding:40px 20px; display:none;
+}
+.success-box.active { display:block; }
+.success-box .check {
+  width:56px; height:56px; background: #d1fae5; border-radius:50%;
+  display:inline-flex; align-items:center; justify-content:center;
+  font-size:24px; color:var(--green); margin-bottom:16px;
+}
+.success-box h3 { font-size:18px; font-weight:600; margin-bottom:4px; }
+.success-box p { color:var(--muted); font-size:14px; }
+
+/* Toast */
+.toast {
+  position:fixed; bottom:24px; right:24px; background:var(--text); color:#fff;
+  padding:10px 20px; border-radius:8px; font-weight:500; font-size:13px;
+  z-index:999; opacity:0; transform:translateY(8px); transition:.25s;
+}
+.toast.show { opacity:1; transform:translateY(0); }
+.toast.error { background: var(--red); }
+
+/* Loading */
+.spinner {
+  display:inline-block; width:16px; height:16px; border:2px solid rgba(255,255,255,0.3);
+  border-top-color:#fff; border-radius:50%; animation:spin .6s linear infinite;
+  margin-right:8px; vertical-align:middle;
+}
+@keyframes spin { to { transform:rotate(360deg); } }
+
+/* Footer */
+footer { text-align:center; padding:24px; color:var(--muted); font-size:12px; border-top:1px solid var(--border); }
+footer a { color:var(--accent); }
+
+@media (max-width:600px) {
+  .info-grid { grid-template-columns:1fr; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">BeastBrain <span>Pay</span></div>
+  <a href="/" class="back">← Back</a>
+</nav>
+
+<div class="page">
+  <div class="container">
+
+    <div class="status-badge"><span class="dot"></span> Pending — Visa Application Fee</div>
+
+    <!-- Applicant Card -->
+    <div class="card">
+      <h2>Shajahan Pothancherry Alavi Pothancherry</h2>
+      <p class="subtitle">Visa application payment — secure Stripe checkout</p>
+
+      <div class="info-grid">
+        <div class="info-item">
+          <div class="label">Full Name</div>
+          <div class="value">SHAJAHAN POTHANCHERRY ALAVI POTHANCHERRY</div>
+        </div>
+        <div class="info-item">
+          <div class="label">Nationality</div>
+          <div class="value">India</div>
+        </div>
+        <div class="info-item">
+          <div class="label">Account Type</div>
+          <div class="value">Individual / Freelancer</div>
+        </div>
+        <div class="info-item">
+          <div class="label">Product</div>
+          <div class="value">Beast AI / BeastBrain</div>
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      <h3 style="font-size:14px;font-weight:600;margin-bottom:12px;">Documents on File</h3>
+
+      <div class="doc-preview" style="margin-bottom:10px;">
+        <div class="doc-icon">🛂</div>
+        <div>
+          <div class="doc-name">Passport — S0124841</div>
+          <div class="doc-meta">SHAJAHAN_passport_S0124841.jpeg</div>
+          <div class="doc-status">✓ Verified</div>
+        </div>
+      </div>
+
+      <div class="doc-preview" style="margin-bottom:10px;">
+        <div class="doc-icon">🪪</div>
+        <div>
+          <div class="doc-name">Emirates ID — Front & Back</div>
+          <div class="doc-meta">SHAJAHAN_EID_front_v2.png · SHAJAHAN_EID_back.png</div>
+          <div class="doc-status">✓ Verified</div>
+        </div>
+      </div>
+
+      <div class="doc-preview">
+        <div class="doc-icon">📄</div>
+        <div>
+          <div class="doc-name">Visa Application Form</div>
+          <div class="doc-meta">visa.jpeg</div>
+          <div class="doc-status" style="color:var(--amber);">⚠ Pending payment to process</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Payment Card -->
+    <div class="card" id="payment-card">
+      <h2>Payment</h2>
+      <p class="subtitle">Secure card payment via Stripe</p>
+
+      <div class="price-box">
+        <div class="amount" id="amount-display">$20.00</div>
+        <div class="currency">USD — Visa application processing fee</div>
+      </div>
+
+      <div id="stripe-container" class="active">
+        <label style="font-size:13px;font-weight:500;color:var(--text);margin-bottom:6px;display:block;">Card Details</label>
+        <div id="card-element"></div>
+        <div id="card-errors"></div>
+      </div>
+
+      <button class="btn" id="pay-btn" onclick="handlePayment()">
+        Pay $20.00
+      </button>
+
+      <p style="font-size:11px;color:var(--muted);text-align:center;margin-top:12px;">
+        🔒 Secured by Stripe. Card details are never stored on our servers.
+      </p>
+    </div>
+
+    <!-- Success -->
+    <div class="success-box" id="success-box">
+      <div class="check">✓</div>
+      <h3>Payment Successful</h3>
+      <p>Visa application is now being processed. You will receive a confirmation shortly.</p>
+      <button class="btn btn-secondary" style="max-width:200px;margin:20px auto;" onclick="location.reload()">Make Another Payment</button>
+    </div>
+
+  </div>
+</div>
+
+<footer>
+  <p>BeastBrain Pay · <a href="https://beastbrain.sichermayor.online">beastbrain.sichermayor.online</a></p>
+</footer>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+// ── Stripe Init ──
+const PUBLISHABLE_KEY = "{{PUBLISHABLE_KEY}}";
+let stripe, elements, cardElement;
+let clientSecret = null;
+let paymentInFlight = false;
+
+async function initStripe() {
+  if (!PUBLISHABLE_KEY || PUBLISHABLE_KEY.startsWith('{{')) {
+    document.getElementById('card-errors').textContent = 'Stripe publishable key not configured.';
+    document.getElementById('pay-btn').disabled = true;
+    return;
+  }
+
+  stripe = Stripe(PUBLISHABLE_KEY);
+  elements = stripe.elements({
+    appearance: {
+      theme: 'stripe',
+      variables: {
+        fontFamily: 'Inter, sans-serif',
+        borderRadius: '6px',
+        colorPrimary: '#2563eb',
+      }
+    }
+  });
+  cardElement = elements.create('card', {
+    style: {
+      base: {
+        fontSize: '14px',
+        color: '#111827',
+        '::placeholder': { color: '#9ca3af' },
+      }
+    }
+  });
+  cardElement.mount('#card-element');
+
+  cardElement.on('change', (event) => {
+    document.getElementById('card-errors').textContent = event.error ? event.error.message : '';
+  });
+
+  // Create PaymentIntent on page load
+  await createPaymentIntent();
+}
+
+async function apiCall(endpoint, body) {
+  try {
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    return await res.json();
+  } catch (e) {
+    return { error: e.message };
+  }
+}
+
+async function createPaymentIntent() {
+  const result = await apiCall('/api/stripe/create-payment-intent', {
+    amount_usd: 20.00,
+    currency: 'usd',
+    description: 'Visa application fee — Shajahan Pothancherry',
+    metadata: {
+      applicant: 'SHAJAHAN POTHANCHERRY ALAVI POTHANCHERRY',
+      type: 'visa_application',
+      passport: 'S0124841',
+      profile: 'shajahan_individual_payment_profile'
+    }
+  });
+
+  if (result.client_secret) {
+    clientSecret = result.client_secret;
+  } else if (result.error) {
+    document.getElementById('card-errors').textContent = 'Payment setup error: ' + result.error;
+    document.getElementById('pay-btn').disabled = true;
+  }
+}
+
+async function handlePayment() {
+  if (paymentInFlight) return;
+  if (!stripe || !cardElement) {
+    showToast('Stripe not initialized', true);
+    return;
+  }
+
+  const btn = document.getElementById('pay-btn');
+  paymentInFlight = true;
+  btn.innerHTML = '<span class="spinner"></span> Processing...';
+  btn.disabled = true;
+  document.getElementById('card-errors').textContent = '';
+
+  try {
+    // Ensure we have a client secret
+    if (!clientSecret) {
+      await createPaymentIntent();
+      if (!clientSecret) throw new Error('Could not create payment session');
+    }
+
+    const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
+      payment_method: { card: cardElement,
+        billing_details: { name: 'SHAJAHAN POTHANCHERRY ALAVI POTHANCHERRY' }
+      }
+    });
+
+    if (error) {
+      document.getElementById('card-errors').textContent = error.message;
+      showToast(error.message, true);
+      // Reset client secret for retry
+      clientSecret = null;
+    } else if (paymentIntent && paymentIntent.status === 'succeeded') {
+      document.getElementById('payment-card').style.display = 'none';
+      document.getElementById('success-box').classList.add('active');
+      showToast('Payment successful! Visa processing started.');
+      // Notify backend
+      await apiCall('/api/stripe/payment-confirmed', {
+        payment_intent_id: paymentIntent.id,
+        amount: paymentIntent.amount / 100,
+        status: paymentIntent.status
+      });
+    } else {
+      document.getElementById('card-errors').textContent =
+        'Payment status: ' + (paymentIntent ? paymentIntent.status : 'unknown');
+      clientSecret = null;
+    }
+  } catch (e) {
+    document.getElementById('card-errors').textContent = 'Error: ' + e.message;
+    showToast('Payment failed: ' + e.message, true);
+    clientSecret = null;
+  } finally {
+    paymentInFlight = false;
+    btn.innerHTML = 'Pay $20.00';
+    btn.disabled = false;
+  }
+}
+
+function showToast(msg, isError) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast' + (isError ? ' error' : '') + ' show';
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ── Init ──
+initStripe();
+</script>
+</body>
+</html>
