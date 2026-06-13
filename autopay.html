@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Autopay — Direct USDC to Wallet</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: #fafafa; color: #111827; min-height: 100vh; }
+        .container { max-width: 500px; margin: 0 auto; padding: 24px; }
+        .header { text-align: center; padding: 48px 0 24px; }
+        .header h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; color: #111827; }
+        .header h1 span { color: #2563eb; }
+        .header p { color: #6b7280; font-size: 14px; margin-top: 6px; }
+        .wallet-badge { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; margin: 20px 0; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+        .wallet-badge .label { font-size: 11px; color: #9ca3af; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+        .wallet-badge .address { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #2563eb; word-break: break-all; }
+        .wallet-badge .network { font-size: 12px; color: #059669; margin-top: 4px; font-weight: 500; }
+        .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 20px; margin: 16px 0; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+        .card label { font-size: 13px; font-weight: 500; color: #374151; display: block; margin-bottom: 8px; }
+        .input-group { display: flex; align-items: center; gap: 10px; }
+        .input-group input { flex: 1; padding: 12px 14px; border: 1px solid #d1d5db; border-radius: 8px; background: #fff; color: #111827; font-size: 20px; font-weight: 600; outline: none; font-family: 'Inter', sans-serif; }
+        .input-group input:focus { border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+        .input-group .currency { font-size: 18px; font-weight: 600; color: #2563eb; }
+        .info { font-size: 12px; color: #6b7280; margin-top: 8px; }
+        .info span { color: #059669; }
+        .features { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 16px 0; }
+        .feature { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; text-align: center; box-shadow: 0 1px 2px rgba(0,0,0,0.03); }
+        .feature .icon { font-size: 18px; margin-bottom: 2px; }
+        .feature .text { font-size: 11px; color: #6b7280; }
+        .feature .status { font-size: 11px; color: #059669; font-weight: 600; }
+        .btn-pay { width: 100%; padding: 14px 24px; border: none; border-radius: 10px; background: #2563eb; color: #fff; font-size: 15px; font-weight: 600; cursor: pointer; margin: 12px 0; transition: .15s; font-family: 'Inter', sans-serif; }
+        .btn-pay:hover { background: #1d4ed8; }
+        .btn-pay:disabled { background: #d1d5db; cursor: not-allowed; }
+        .loading { display: none; text-align: center; padding: 32px; }
+        .spinner { width: 36px; height: 36px; border: 3px solid #e5e7eb; border-top-color: #2563eb; border-radius: 50%; animation: spin 0.7s linear infinite; margin: 0 auto 12px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading p { color: #6b7280; font-size: 13px; }
+        .providers { font-size: 11px; color: #9ca3af; text-align: center; margin-top: 8px; }
+        .error-box { display: none; background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 14px; margin: 12px 0; color: #991b1b; font-size: 13px; }
+        .footer { text-align: center; padding: 24px; color: #9ca3af; font-size: 11px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Buy <span>USDC</span> to Wallet</h1>
+            <p>Card → USDC · Solana · Instant settlement</p>
+        </div>
+
+        <div class="wallet-badge">
+            <div class="label">Receiving Wallet</div>
+            <div class="address" id="walletAddress">7T34pXqwy666yjZXuFWNQo6tFVHukNgPdx9VCcf7W8J7</div>
+            <div class="network">Solana · USDC</div>
+        </div>
+
+        <div class="features">
+            <div class="feature">
+                <div class="icon">🔒</div>
+                <div class="text">Zero OTP</div>
+                <div class="status">No SMS/Email</div>
+            </div>
+            <div class="feature">
+                <div class="icon">🌍</div>
+                <div class="text">Multi-Gateway</div>
+                <div class="status">MoonPay & more</div>
+            </div>
+            <div class="feature">
+                <div class="icon">💎</div>
+                <div class="text">USDC → Solana</div>
+                <div class="status">1-5 min</div>
+            </div>
+            <div class="feature">
+                <div class="icon">🏦</div>
+                <div class="text">No 3DS / No 2FA</div>
+                <div class="status">Frictionless</div>
+            </div>
+        </div>
+
+        <div class="card" id="amountSection">
+            <label>Amount</label>
+            <div class="input-group">
+                <input type="number" id="amountInput" min="50" max="3670" value="100" placeholder="50-3670">
+                <span class="currency">AED</span>
+            </div>
+            <div class="info">
+                No KYC up to <span>550 AED</span> · 1-5 min · Fee ~2%
+            </div>
+        </div>
+
+        <button class="btn-pay" id="payBtn" onclick="startPayment()">
+            Buy USDC → Wallet
+        </button>
+
+        <div class="providers">Powered by MoonPay · Mercuryo · Ramp · Banxa · Simplex</div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Creating your checkout session...</p>
+        </div>
+
+        <div class="error-box" id="errorBox"></div>
+    </div>
+
+    <script>
+        const WALLET = "7T34pXqwy666yjZXuFWNQo6tFVHukNgPdx9VCcf7W8J7";
+
+        async function startPayment() {
+            const amount = parseFloat(document.getElementById('amountInput').value);
+            if (!amount || amount < 50) {
+                showError('Minimum amount is 50 AED');
+                return;
+            }
+
+            document.getElementById('amountSection').style.display = 'none';
+            document.getElementById('payBtn').style.display = 'none';
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('errorBox').style.display = 'none';
+
+            try {
+                const resp = await fetch('/api/card-to-crypto/checkout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        amount_aed: amount,
+                        crypto: 'USDC',
+                        wallet_address: WALLET,
+                        network: 'solana'
+                    })
+                });
+
+                const data = await resp.json();
+
+                if (data.checkout_url) {
+                    // Redirect to Onramper hosted checkout
+                    window.location.href = data.checkout_url;
+                } else if (data.detail) {
+                    showError(data.detail);
+                } else {
+                    showError('Could not create checkout. Please try again.');
+                }
+            } catch (e) {
+                showError('Connection error: ' + e.message);
+            }
+        }
+
+        function showError(msg) {
+            const err = document.getElementById('errorBox');
+            err.textContent = msg;
+            err.style.display = 'block';
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('amountSection').style.display = 'block';
+            document.getElementById('payBtn').style.display = 'block';
+        }
+    </script>
+</body>
+</html>
